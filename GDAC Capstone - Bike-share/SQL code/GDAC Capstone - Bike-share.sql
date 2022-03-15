@@ -1,7 +1,7 @@
 
 -- GDAC Capstone - Bike-share 3/11/2022
 
--- Data was downloaded from this [website](https://divvy-tripdata.s3.amazonaws.com/index.html)
+-- Data was downloaded from this https://divvy-tripdata.s3.amazonaws.com/index.html
 
 -- Previous 12 months (March 2021 - February 2022) of trip data were downloaded.  Each month is speperated into own .csv file
 
