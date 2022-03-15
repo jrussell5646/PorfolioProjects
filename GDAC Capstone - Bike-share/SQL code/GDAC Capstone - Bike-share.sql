@@ -1,4 +1,3 @@
-
 -- GDAC Capstone - Bike-share 3/11/2022
 
 -- Data was downloaded from https://divvy-tripdata.s3.amazonaws.com/index.html
@@ -8,6 +7,8 @@
 -- .csv files were imported into SQL Server individually
 
 -- Creates new table, TripData_Master, from 03/2021 table
+
+-- Visualizations made with Tableau Public and can be viewed at https://public.tableau.com/app/profile/john1575#!/
 
 Select * into
 TripData_Master
