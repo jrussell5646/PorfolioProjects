@@ -1,5 +1,6 @@
 -- Exploring Covid data in SQL
 -- Data downloaded from https://ourworldindata.org/covid-deaths
+-- Visualizations made with Tableau Public and can be viewed at https://public.tableau.com/app/profile/john1575#!/
 
 Select *
 From CovidDeaths
