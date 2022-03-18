@@ -1,0 +1,1101 @@
+Function GetSignature(fPath As String) As String
+    Dim fso As Object
+    Dim TSet As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set TSet = fso.GetFile(fPath).OpenAsTextStream(1, -2)
+    GetSignature = TSet.readall
+    TSet.Close
+End Function
+
+Sub OpenZZPP()
+    
+    Application.DisplayAlerts = False
+    Application.ScreenUpdating = False
+    
+    Dim Wb3 As Excel.Workbook
+    Set Wb3 = Workbooks.Open("I:\Exception Messages\Scripts\ZZPP_M02_Q001_00000.XLS")
+    
+    
+'
+'
+
+'Stage 1
+
+Cells.Select
+    Selection.UnMerge
+    
+    Rows("1:6").Select
+    Selection.Delete Shift:=xlUp
+    Range("M2:Q3").Select
+    Selection.ClearContents
+    Range("N1:Q1").Select
+    Selection.Cut
+    Range("N3").Select
+    ActiveSheet.Paste
+    
+    Columns("A:A").Select
+    Selection.Delete Shift:=xlToLeft
+    Columns("C:C").Select
+    Selection.Delete Shift:=xlToLeft
+    Columns("F:F").Select
+    Selection.Delete Shift:=xlToLeft
+    Columns("I:I").Select
+    Selection.Delete Shift:=xlToLeft
+    Rows("1:2").Select
+    Selection.Delete Shift:=xlUp
+    Range("A1").Select
+    ActiveCell.FormulaR1C1 = "Buyer"
+    Range("D1").Select
+    ActiveCell.FormulaR1C1 = "Material Description"
+    Range("I1").Select
+    ActiveCell.FormulaR1C1 = "Exception"
+    Range("H1").Select
+    Selection.Copy
+    Range("I1").Select
+    Selection.PasteSpecial Paste:=xlPasteFormats, Operation:=xlNone, _
+        SkipBlanks:=False, Transpose:=False
+    Application.CutCopyMode = False
+    Rows("1:1").EntireRow.AutoFit
+    Columns("E:E").Select
+    Selection.Cut
+    Columns("B:B").Select
+    Selection.Insert Shift:=xlToRight
+    
+    
+'Apply Filters
+
+    Columns("A:M").Select
+    Selection.AutoFilter
+    
+' Days Difference Calculation
+    
+    Columns("M:M").ColumnWidth = 13.86
+    Rows("1:1").RowHeight = 48
+    
+    Dim lastrow As Long
+    lastrow = Range("L" & Rows.Count).End(xlUp).Row
+    Range("M2").Select
+    ActiveCell.FormulaR1C1 = "=RC[-7]-RC[-6]"
+    Range("M2:M2").AutoFill Destination:=Range("M2:M" & lastrow)
+    
+'Sorting Info
+
+' Sort only 45 PO's
+   ActiveSheet.UsedRange.AutoFilter Field:=3, Criteria1:="=45*", _
+        Operator:=xlAnd
+        
+' Sort for Reschedule In Exceptions Only
+
+    ActiveSheet.UsedRange.AutoFilter Field:=9, Criteria1:= _
+        "Reschedule in"
+        
+' Sort out Safety Stock and Samples
+
+    ActiveSheet.UsedRange.AutoFilter Field:=8, Criteria1:="<>*samp*" _
+        , Operator:=xlAnd, Criteria2:="<>*saf*"
+        
+       
+'Sort out #VALUE message
+    ActiveSheet.UsedRange.AutoFilter Field:=7, Criteria1:="<>*#*" _
+
+
+    
+' Sort by Difference in Days for Rechedule Date
+    
+    ActiveSheet.AutoFilter.Sort. _
+        SortFields.Clear
+    ActiveSheet.AutoFilter.Sort. _
+        SortFields.Add Key:=Range("M1:M5000"), SortOn:=xlSortOnValues, Order:= _
+        xlDescending, DataOption:=xlSortNormal
+    With ActiveSheet.AutoFilter.Sort
+        .Header = xlYes
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
+   
+    
+' Highlights Cells Yellow without Exception Messages
+        
+    Columns("H:H").Select
+    Selection.FormatConditions.Add Type:=xlCellValue, Operator:=xlEqual, _
+        Formula1:="=""#"""
+    Selection.FormatConditions(Selection.FormatConditions.Count).SetFirstPriority
+    With Selection.FormatConditions(1).Interior
+        .PatternColorIndex = xlAutomatic
+        .Color = 65535
+        .TintAndShade = 0
+    End With
+    Selection.FormatConditions(1).StopIfTrue = False
+    
+' Highlights Cells Blue for Planning
+    
+    Columns("H:H").Select
+    Selection.FormatConditions.Add Type:=xlTextString, String:="best", _
+        TextOperator:=xlContains
+    Selection.FormatConditions(Selection.FormatConditions.Count).SetFirstPriority
+    With Selection.FormatConditions(1).Interior
+        .PatternColorIndex = xlAutomatic
+        .Color = 15773696
+        .TintAndShade = 0
+    End With
+    Selection.FormatConditions(1).StopIfTrue = False
+    
+    Columns("H:H").Select
+    Selection.FormatConditions.Add Type:=xlTextString, String:="planning", _
+        TextOperator:=xlContains
+    Selection.FormatConditions(Selection.FormatConditions.Count).SetFirstPriority
+    With Selection.FormatConditions(1).Interior
+        .PatternColorIndex = xlAutomatic
+        .Color = 15773696
+        .TintAndShade = 0
+    End With
+    Selection.FormatConditions(1).StopIfTrue = False
+    
+    Columns("H:H").Select
+    Selection.FormatConditions.Add Type:=xlTextString, String:="reschedule", _
+        TextOperator:=xlContains
+    Selection.FormatConditions(Selection.FormatConditions.Count).SetFirstPriority
+    With Selection.FormatConditions(1).Interior
+        .PatternColorIndex = xlAutomatic
+        .Color = 15773696
+        .TintAndShade = 0
+    End With
+    Selection.FormatConditions(1).StopIfTrue = False
+    
+' Highlights Cells Orange for Safety Stock
+    
+    Columns("H:H").Select
+    Selection.FormatConditions.Add Type:=xlTextString, String:="saf", _
+        TextOperator:=xlContains
+    Selection.FormatConditions(Selection.FormatConditions.Count).SetFirstPriority
+    With Selection.FormatConditions(1).Interior
+        .PatternColorIndex = xlAutomatic
+        .Color = 49407
+        .TintAndShade = 0
+    End With
+    Selection.FormatConditions(1).StopIfTrue = False
+    
+    Columns("H:H").Select
+    Selection.FormatConditions.Add Type:=xlTextString, String:=" ss ", _
+        TextOperator:=xlContains
+    Selection.FormatConditions(Selection.FormatConditions.Count).SetFirstPriority
+    With Selection.FormatConditions(1).Interior
+        .PatternColorIndex = xlAutomatic
+        .Color = 49407
+        .TintAndShade = 0
+    End With
+    Selection.FormatConditions(1).StopIfTrue = False
+    
+'Rename Worksheet
+
+    ActiveSheet.Name = "Reschedule Ins"
+    
+    
+'Clear Selection
+    
+    Range("a1").Select
+    
+'
+'Stage 2
+
+
+'Create Copy of visible cells
+
+    ActiveSheet.UsedRange.Select
+    Selection.SpecialCells(xlCellTypeVisible).Select
+    Selection.Copy
+    Sheets.Add After:=Sheets(Sheets.Count)
+    Selection.PasteSpecial Paste:=xlPasteColumnWidths, Operation:=xlNone, _
+        SkipBlanks:=False, Transpose:=False
+    ActiveSheet.Paste
+    
+'Format as Table
+
+    ActiveSheet.ListObjects.Add(xlSrcRange, ActiveSheet.UsedRange, , xlYes).Name = "Table1"
+    Range("Table1[#All]").Select
+    ActiveSheet.ListObjects("Table1").TableStyle = "TableStyleLight1"
+    
+'Display important numbers
+
+    Sheets.Add After:=Sheets(Sheets.Count)
+    ActiveSheet.Name = "Analysis"
+    ActiveCell.FormulaR1C1 = "Number of Reschedule In's"
+    Range("A2").Select
+    ActiveCell.FormulaR1C1 = "Number of Blank Messages"
+    Range("A3").Select
+    ActiveCell.FormulaR1C1 = "Percentage"
+    Columns("A:A").EntireColumn.AutoFit
+    Range("B1").Select
+    ActiveCell.FormulaR1C1 = "=COUNTA(Table1[Exception Message])"
+    Range("B2").Select
+    ActiveCell.FormulaR1C1 = "=COUNTIF(Table1[Exception Message],""#"")"
+    Range("B3").Select
+    ActiveCell.FormulaR1C1 = "=ROUND(R[-1]C/R[-2]C,3)*100"
+    Range("B3").Select
+    
+
+'Today's Date
+
+    Range("D1").Select
+    ActiveCell.FormulaR1C1 = "=TODAY()"
+    Range("D1").Select
+    Selection.Copy
+    Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+        :=False, Transpose:=False
+    Application.CutCopyMode = False
+    
+'Format Important Numbers
+    
+    Range("A1:B3").Select
+    Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+    Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+    With Selection.Borders(xlEdgeLeft)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlEdgeTop)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlEdgeRight)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlInsideVertical)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlInsideHorizontal)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    
+'Create Pivot Table 1
+
+
+    ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:= _
+        "Table1", Version:=xlPivotTableVersion14).CreatePivotTable TableDestination _
+        :="Analysis!R6C1", TableName:="PivotTable1", DefaultVersion:= _
+        xlPivotTableVersion14
+    Sheets("Analysis").Select
+    Cells(6, 1).Select
+    With ActiveSheet.PivotTables("PivotTable1").PivotFields("Buyer")
+        .Orientation = xlRowField
+        .Position = 1
+    End With
+    ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables( _
+        "PivotTable1").PivotFields("Exception Message"), "Count of Exception Message", _
+        xlCount
+    ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables( _
+        "PivotTable1").PivotFields("Open Quantity Cost"), "Sum of Open Quantity Cost", _
+        xlSum
+        
+'Create Pivot Table 2
+
+    Range("E6").Select
+    ActiveWorkbook.Worksheets("Analysis").PivotTables("PivotTable1").PivotCache. _
+        CreatePivotTable TableDestination:="Analysis!R6C5", TableName:= _
+        "PivotTable5", DefaultVersion:=xlPivotTableVersion14
+    Sheets("Analysis").Select
+    Cells(6, 5).Select
+    With ActiveSheet.PivotTables("PivotTable5").PivotFields( _
+        "Days Difference (Reschedule vs. MRP Req Date)")
+        .Orientation = xlRowField
+        .Position = 1
+    End With
+    Range("E7").Select
+    Selection.Group Start:=1, End:=180, By:=30
+    ActiveSheet.PivotTables("PivotTable5").AddDataField ActiveSheet.PivotTables( _
+        "PivotTable5").PivotFields("Exception"), _
+        "Count of Days Difference (Reschedule vs. MRP Req Date)", xlCount
+    With ActiveSheet.PivotTables("PivotTable5").PivotFields("Buyer")
+        .Orientation = xlRowField
+        .Position = 2
+    End With
+        
+'Format Tables
+        
+    Range("C:C").Select
+    Selection.Style = "Currency"
+    Columns("A:A").EntireColumn.AutoFit
+    
+'Hide Sheet1
+
+    Sheets("Sheet1").Visible = False
+    
+    Sheets("Reschedule Ins").Select
+    
+'Create Copy of visible cells
+
+    ActiveSheet.UsedRange.Select
+    Selection.SpecialCells(xlCellTypeVisible).Select
+    Selection.Copy
+    Sheets.Add After:=Sheets(Sheets.Count)
+    Selection.PasteSpecial Paste:=xlPasteColumnWidths, Operation:=xlNone, _
+        SkipBlanks:=False, Transpose:=False
+    ActiveSheet.Paste
+    
+    
+'Format Tables
+        
+    ActiveSheet.ListObjects.Add(xlSrcRange, ActiveSheet.UsedRange, , xlYes).Name = "Table2"
+    Range("Table2[#All]").Select
+    ActiveSheet.ListObjects("Table2").TableStyle = "TableStyleLight1"
+    
+'Filter only Blue cells
+    
+    ActiveSheet.ListObjects("Table2").Range.AutoFilter Field:=8, Criteria1:=RGB _
+           (0, 176, 240), Operator:=xlFilterCellColor
+           
+'Create Copy of visible cells
+           
+    ActiveSheet.UsedRange.Select
+    Selection.SpecialCells(xlCellTypeVisible).Select
+    Selection.Copy
+    Sheets.Add After:=Sheets(Sheets.Count)
+    Selection.PasteSpecial Paste:=xlPasteColumnWidths, Operation:=xlNone, _
+        SkipBlanks:=False, Transpose:=False
+    ActiveSheet.Paste
+    
+'Format Tables
+        
+    ActiveSheet.ListObjects.Add(xlSrcRange, ActiveSheet.UsedRange, , xlYes).Name = "Table3"
+    Range("Table3[#All]").Select
+    ActiveSheet.ListObjects("Table3").TableStyle = "TableStyleLight1"
+    
+    
+'Display number Blue PO's
+
+    Sheets("Analysis").Select
+    Application.CutCopyMode = False
+    Range("B4").Select
+    ActiveCell.FormulaR1C1 = "=COUNTA(Table3[Exception Message])"
+    Range("A4").Select
+    ActiveCell.FormulaR1C1 = "PO's"
+    
+'Formatting
+    
+    Columns("D:D").EntireColumn.AutoFit
+    Range("A4:B4").Select
+    Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+    Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+    With Selection.Borders(xlEdgeLeft)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlEdgeTop)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlEdgeRight)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlInsideVertical)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlInsideHorizontal)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    
+'Delete and hide worksheet 3&4
+
+    Application.DisplayAlerts = False
+    Sheets("Sheet3").Select
+    ActiveWindow.SelectedSheets.Delete
+    Sheets("Sheet4").Select
+    ActiveWindow.SelectedSheets.Visible = False
+    Application.DisplayAlerts = True
+    
+'
+'Stage 3
+    
+'Printing Format Below
+
+    Application.PrintCommunication = False
+    With ActiveSheet.PageSetup
+        .PrintTitleRows = ""
+        .PrintTitleColumns = ""
+    End With
+    Application.PrintCommunication = True
+    ActiveSheet.PageSetup.PrintArea = ""
+    Application.PrintCommunication = False
+    With ActiveSheet.PageSetup
+        .LeftHeader = ""
+        .CenterHeader = ""
+        .RightHeader = ""
+        .LeftFooter = ""
+        .CenterFooter = ""
+        .RightFooter = ""
+        .LeftMargin = Application.InchesToPoints(0.75)
+        .RightMargin = Application.InchesToPoints(0.75)
+        .TopMargin = Application.InchesToPoints(1)
+        .BottomMargin = Application.InchesToPoints(1)
+        .HeaderMargin = Application.InchesToPoints(0.5)
+        .FooterMargin = Application.InchesToPoints(0.5)
+        .PrintHeadings = False
+        .PrintGridlines = False
+        .PrintComments = xlPrintNoComments
+        .PrintQuality = 600
+        .CenterHorizontally = False
+        .CenterVertically = False
+        .Orientation = xlPortrait
+        .Draft = False
+        .PaperSize = xlPaperTabloid
+        .FirstPageNumber = xlAutomatic
+        .Order = xlDownThenOver
+        .BlackAndWhite = False
+        .Zoom = 100
+        .PrintErrors = xlPrintErrorsDisplayed
+        .OddAndEvenPagesHeaderFooter = False
+        .DifferentFirstPageHeaderFooter = False
+        .ScaleWithDocHeaderFooter = True
+        .AlignMarginsHeaderFooter = True
+        .EvenPage.LeftHeader.Text = ""
+        .EvenPage.CenterHeader.Text = ""
+        .EvenPage.RightHeader.Text = ""
+        .EvenPage.LeftFooter.Text = ""
+        .EvenPage.CenterFooter.Text = ""
+        .EvenPage.RightFooter.Text = ""
+        .FirstPage.LeftHeader.Text = ""
+        .FirstPage.CenterHeader.Text = ""
+        .FirstPage.RightHeader.Text = ""
+        .FirstPage.LeftFooter.Text = ""
+        .FirstPage.CenterFooter.Text = ""
+        .FirstPage.RightFooter.Text = ""
+    End With
+    Application.PrintCommunication = True
+    Application.PrintCommunication = False
+    With ActiveSheet.PageSetup
+        .PrintTitleRows = ""
+        .PrintTitleColumns = ""
+    End With
+    Application.PrintCommunication = True
+    ActiveSheet.PageSetup.PrintArea = ""
+    Application.PrintCommunication = False
+    With ActiveSheet.PageSetup
+        .LeftHeader = ""
+        .CenterHeader = ""
+        .RightHeader = ""
+        .LeftFooter = ""
+        .CenterFooter = ""
+        .RightFooter = ""
+        .LeftMargin = Application.InchesToPoints(0.25)
+        .RightMargin = Application.InchesToPoints(0.25)
+        .TopMargin = Application.InchesToPoints(0.75)
+        .BottomMargin = Application.InchesToPoints(0.75)
+        .HeaderMargin = Application.InchesToPoints(0.3)
+        .FooterMargin = Application.InchesToPoints(0.3)
+        .PrintHeadings = False
+        .PrintGridlines = False
+        .PrintComments = xlPrintNoComments
+        .PrintQuality = 600
+        .CenterHorizontally = False
+        .CenterVertically = False
+        .Orientation = xlPortrait
+        .Draft = False
+        .PaperSize = xlPaperTabloid
+        .FirstPageNumber = xlAutomatic
+        .Order = xlDownThenOver
+        .BlackAndWhite = False
+        .Zoom = 100
+        .PrintErrors = xlPrintErrorsDisplayed
+        .OddAndEvenPagesHeaderFooter = False
+        .DifferentFirstPageHeaderFooter = False
+        .ScaleWithDocHeaderFooter = True
+        .AlignMarginsHeaderFooter = True
+        .EvenPage.LeftHeader.Text = ""
+        .EvenPage.CenterHeader.Text = ""
+        .EvenPage.RightHeader.Text = ""
+        .EvenPage.LeftFooter.Text = ""
+        .EvenPage.CenterFooter.Text = ""
+        .EvenPage.RightFooter.Text = ""
+        .FirstPage.LeftHeader.Text = ""
+        .FirstPage.CenterHeader.Text = ""
+        .FirstPage.RightHeader.Text = ""
+        .FirstPage.LeftFooter.Text = ""
+        .FirstPage.CenterFooter.Text = ""
+        .FirstPage.RightFooter.Text = ""
+    End With
+    Application.PrintCommunication = True
+    Application.PrintCommunication = False
+    With ActiveSheet.PageSetup
+        .PrintTitleRows = ""
+        .PrintTitleColumns = ""
+    End With
+    Application.PrintCommunication = True
+    ActiveSheet.PageSetup.PrintArea = ""
+    Application.PrintCommunication = False
+    With ActiveSheet.PageSetup
+        .LeftHeader = ""
+        .CenterHeader = ""
+        .RightHeader = ""
+        .LeftFooter = ""
+        .CenterFooter = ""
+        .RightFooter = ""
+        .LeftMargin = Application.InchesToPoints(0.25)
+        .RightMargin = Application.InchesToPoints(0.25)
+        .TopMargin = Application.InchesToPoints(0.75)
+        .BottomMargin = Application.InchesToPoints(0.75)
+        .HeaderMargin = Application.InchesToPoints(0.3)
+        .FooterMargin = Application.InchesToPoints(0.3)
+        .PrintHeadings = False
+        .PrintGridlines = False
+        .PrintComments = xlPrintNoComments
+        .PrintQuality = 600
+        .CenterHorizontally = False
+        .CenterVertically = False
+        .Orientation = xlPortrait
+        .Draft = False
+        .PaperSize = xlPaperTabloid
+        .FirstPageNumber = xlAutomatic
+        .Order = xlDownThenOver
+        .BlackAndWhite = False
+        .Zoom = False
+        .FitToPagesWide = 1
+        .FitToPagesTall = 0
+        .PrintErrors = xlPrintErrorsDisplayed
+        .OddAndEvenPagesHeaderFooter = False
+        .DifferentFirstPageHeaderFooter = False
+        .ScaleWithDocHeaderFooter = True
+        .AlignMarginsHeaderFooter = True
+        .EvenPage.LeftHeader.Text = ""
+        .EvenPage.CenterHeader.Text = ""
+        .EvenPage.RightHeader.Text = ""
+        .EvenPage.LeftFooter.Text = ""
+        .EvenPage.CenterFooter.Text = ""
+        .EvenPage.RightFooter.Text = ""
+        .FirstPage.LeftHeader.Text = ""
+        .FirstPage.CenterHeader.Text = ""
+        .FirstPage.RightHeader.Text = ""
+        .FirstPage.LeftFooter.Text = ""
+        .FirstPage.CenterFooter.Text = ""
+        .FirstPage.RightFooter.Text = ""
+    End With
+    Application.PrintCommunication = True
+    
+'
+'
+
+'Stage 4 Transfer Data to Workbooks
+    
+    
+'Save File
+        
+    ActiveWorkbook.SaveAs Filename:="I:\Exception Messages\Past Reschedule In Reports\Reschedule Ins - " & Format(Date, "mm.dd.yyyy") & ".xlsx", FileFormat:=51
+'
+'
+'Transfer data to Long Term Performance
+
+    ActiveWorkbook.SaveAs Filename:="I:\Exception Messages\Temp Files\Temp.xlsx" 'Save file as new name to reference later
+
+
+    Dim erow As Integer
+    Dim Wb1 As Excel.Workbook
+    Set Wb1 = Workbooks.Open("I:\Exception Messages\Temp Files\Temp.xlsx")
+    Dim Wb2 As Excel.Workbook
+    Set Wb2 = Workbooks.Open("I:\Exception Messages\Exception Message Performance.xlsx")
+    
+    Dim Sheet1 As Worksheet
+    Dim LObj As ListObject
+    Dim Lrow As ListRow
+
+    Set Sheet1 = Sheets("Sheet1")
+    Set LObj = Sheet1.ListObjects(1)
+    Set Lrow = LObj.ListRows.Add
+    
+    
+'Open Exception Message Performace Workbook
+    Wb1.Activate
+    Sheets("Analysis").Select
+    Range("D1").Select
+    Selection.Copy
+    
+    Wb2.Activate
+    erow = ActiveSheet.Cells(Rows.Count, 1).End(xlUp).Row
+    ActiveSheet.Cells(erow, 1).Select
+    Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+        :=False, Transpose:=False
+    Application.CutCopyMode = False
+    
+    
+'Select # of blank cells
+    Wb1.Activate
+    Wb1.Sheets("Analysis").Activate
+    Range("B2").Select
+    Selection.Copy
+    
+    Wb2.Activate
+    ActiveSheet.Cells(erow, 2).Select
+    Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+        :=False, Transpose:=False
+    Application.CutCopyMode = False
+
+    Wb1.Activate
+    Sheets("Analysis").Select
+    Range("B1").Select
+    Selection.Copy
+
+    Wb2.Activate
+    ActiveSheet.Cells(erow, 3).Select
+    Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+        :=False, Transpose:=False
+    Application.CutCopyMode = False
+    
+' Save File
+
+    ActiveWorkbook.Save
+    
+'
+'
+' Transfer information to Excpetion Message Template
+
+    Dim Wb4 As Excel.Workbook
+    Set Wb4 = Workbooks.Open("I:\Exception Messages\Scripts\Exception Message Template.xlsm")
+    
+    Wb1.Activate
+    Wb1.Sheets("Reschedule Ins").Activate
+    ActiveSheet.ShowAllData
+    ActiveSheet.UsedRange.Select
+    Selection.SpecialCells(xlCellTypeVisible).Select
+    Selection.Copy
+    
+    Wb4.Activate
+    Sheets("Exception Messages").Select
+    Range("A3").Select
+    ActiveSheet.Paste
+    
+    Range("A3:M3").Select
+    Application.CutCopyMode = False
+    Selection.AutoFilter
+    
+'
+'
+'
+'Add Tables
+    'copy data to another worksheet to format as table
+
+    ActiveSheet.UsedRange.Select
+
+    Application.CopyObjectsWithCells = False
+    Selection.Copy
+    Sheets("Sheet2").Select
+    Range("A1").Select
+    ActiveSheet.Paste
+    
+    
+    Rows("1:2").Select
+    Application.CutCopyMode = False
+    Selection.Delete Shift:=xlUp
+    
+    
+    ActiveSheet.UsedRange.Select
+
+    ActiveSheet.ListObjects.Add(xlSrcRange, ActiveSheet.UsedRange, , xlYes).Name = _
+        "Table1"
+    Range("Table1[#All]").Select
+    ActiveSheet.ListObjects("Table1").TableStyle = "TableStyleLight2"
+    
+    'Add blank column
+    
+    Range("N1").Select
+    ActiveCell.FormulaR1C1 = "Blank"
+    Range("N2").Select
+    ActiveCell.FormulaR1C1 = "=IF([@[Exception Message]]=""#"",1,0)"
+    Range("N3").Select
+    
+    'Create Pivot Table 1
+    
+    Sheets("Sheet3").Select
+    ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:= _
+        "Table1", Version:=xlPivotTableVersion14).CreatePivotTable TableDestination _
+        :="Sheet3!R1C1", TableName:="PivotTable1", DefaultVersion:= _
+        xlPivotTableVersion14
+    Sheets("Sheet3").Select
+    Cells(1, 1).Select
+    
+    ActiveSheet.PivotTables("PivotTable1").AddDataField ActiveSheet.PivotTables( _
+        "PivotTable1").PivotFields("Material"), "Count of Material", xlCount
+    ActiveSheet.PivotTables("PivotTable1").PivotSelect "", xlDataAndLabel, True
+    
+    With ActiveSheet.PivotTables("PivotTable1").PivotFields("Material")
+        .Orientation = xlRowField
+        .Position = 1
+    End With
+    
+    Range("A1").Select
+    ActiveSheet.PivotTables("PivotTable1").CompactLayoutRowHeader = "P/N"
+    Range("B1").Select
+    ActiveSheet.PivotTables("PivotTable1").DataPivotField.PivotItems( _
+        "Count of Material").Caption = "# of Messages"
+    
+    'Copy Pivot table Pivot Table Worksheet
+    
+    ActiveSheet.UsedRange.Select
+    
+    Selection.Copy
+    Sheets.Add After:=Sheets(Sheets.Count)
+    ActiveSheet.Paste
+    Columns("A:A").EntireColumn.AutoFit
+    Columns("B:B").EntireColumn.AutoFit
+    Range("A1:B1").Select
+    Sheets("Sheet3").Select
+    Application.CutCopyMode = False
+    Selection.Copy
+    Sheets("Sheet1").Select
+    Range("A1").Select
+    Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+        :=False, Transpose:=False
+    Range("A1:B1").Select
+    Application.CutCopyMode = False
+    Selection.AutoFilter
+    ActiveWorkbook.Worksheets("Sheet1").AutoFilter.Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets("Sheet1").AutoFilter.Sort.SortFields.Add Key:=Range _
+        ("B1"), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:= _
+        xlSortNormal
+    With ActiveWorkbook.Worksheets("Sheet1").AutoFilter.Sort
+        .Header = xlYes
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
+    Columns("A:A").EntireColumn.AutoFit
+    Columns("B:B").EntireColumn.AutoFit
+    ActiveSheet.ListObjects.Add(xlSrcRange, ActiveSheet.UsedRange, , xlYes).Name = _
+        "Table2"
+    Range("Table2[#All]").Select
+    ActiveSheet.ListObjects("Table2").TableStyle = "TableStyleLight1"
+    
+    'Create Pivot Table 2
+    
+    Sheets.Add After:=Sheets(Sheets.Count)
+    ActiveWorkbook.Worksheets("Sheet3").PivotTables("PivotTable1").PivotCache. _
+        CreatePivotTable TableDestination:="Sheet4!R1C1", TableName:="PivotTable7" _
+        , DefaultVersion:=xlPivotTableVersion14
+    Sheets("Sheet4").Select
+    Cells(1, 1).Select
+    With ActiveSheet.PivotTables("PivotTable7").PivotFields("Buyer")
+        .Orientation = xlRowField
+        .Position = 1
+    End With
+    ActiveSheet.PivotTables("PivotTable7").AddDataField ActiveSheet.PivotTables( _
+        "PivotTable7").PivotFields("Blank"), "Sum of Blank", xlSum
+    ActiveSheet.PivotTables("PivotTable7").AddDataField ActiveSheet.PivotTables( _
+        "PivotTable7").PivotFields("Exception Message"), "Count of Exception Message", _
+        xlCount
+    
+    'Copy Pivot Table to Pivot Table Worksheet
+    
+    ActiveSheet.UsedRange.Select
+    Selection.Copy
+    Sheets("Sheet1").Select
+    Range("E1").Select
+    Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+        :=False, Transpose:=False
+    ActiveSheet.ListObjects.Add(xlSrcRange, Range("E1:G25"), , xlYes).Name = _
+        "Table3"
+    Range("Table3[#All]").Select
+    ActiveSheet.ListObjects("Table3").TableStyle = "TableStyleLight1"
+    Range("H1").Select
+    ActiveCell.FormulaR1C1 = "Percent Blank"
+    Range("E1").Select
+    ActiveCell.FormulaR1C1 = "Buyer"
+    Range("H2").Select
+    ActiveCell.FormulaR1C1 = "=IF(ISBLANK([@[Count of Exception Message]]),"""",([@[Sum of Blank]]/[@[Count of Exception Message]]))"
+    Columns("H:H").Select
+    Selection.Style = "Percent"
+    Sheets("Sheet1").Name = "Pivot Tables"
+    Columns("A:H").EntireColumn.AutoFit
+    
+    'Hide uneeded sheets
+    
+    Sheets("Sheet2").Select
+    ActiveWindow.SelectedSheets.Visible = False
+    Sheets("Sheet3").Select
+    ActiveWindow.SelectedSheets.Visible = False
+    Sheets("Sheet4").Select
+    ActiveWindow.SelectedSheets.Visible = False
+    Sheets("Exception Messages").Select
+    Range("A1").Select
+
+
+    
+'Sorting Info
+
+' Sort only 45 PO's
+    ActiveSheet.UsedRange.AutoFilter Field:=3, Criteria1:="=45*", _
+        Operator:=xlAnd
+        
+' Sort for Reschedule In Exceptions Only
+
+    ActiveSheet.UsedRange.AutoFilter Field:=9, Criteria1:= _
+        "Reschedule in"
+        
+' Sort out Safety Stock and Samples
+
+    ActiveSheet.UsedRange.AutoFilter Field:=8, Criteria1:="<>*samp*" _
+        , Operator:=xlAnd, Criteria2:="<>*saf*"
+        
+       
+'Sort out #VALUE message
+    ActiveSheet.UsedRange.AutoFilter Field:=7, Criteria1:="<>*#*" _
+
+' Sort by Difference in Days for Rechedule Date
+    
+    ActiveSheet.AutoFilter.Sort. _
+        SortFields.Clear
+    ActiveSheet.AutoFilter.Sort. _
+        SortFields.Add Key:=Range("M1:M5000"), SortOn:=xlSortOnValues, Order:= _
+        xlDescending, DataOption:=xlSortNormal
+    With ActiveSheet.AutoFilter.Sort
+        .Header = xlYes
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
+    
+'Red
+    Range("F2:H2").Select
+    With Selection.Interior
+        .Pattern = xlSolid
+        .PatternColorIndex = xlAutomatic
+        .Color = 5287936
+        .TintAndShade = 0
+        .PatternTintAndShade = 0
+    End With
+    ActiveCell.FormulaR1C1 = "Reschedule In's"
+    With Selection
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlCenter
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .IndentLevel = 0
+        .ShrinkToFit = False
+        .ReadingOrder = xlContext
+        .MergeCells = True
+    End With
+    Selection.Font.Size = 32
+        
+    ActiveWorkbook.SaveAs Filename:="I:\Exception Messages\Past Exception Message Reports\Exception Messages - " & Format(Date, "mm.dd.yyyy") & ".xlsm", FileFormat:=52
+
+'Send Buyer Email
+    Wb1.Activate
+    
+    Sheets("Analysis").Select
+    
+    Dim OutApp As Object
+    Dim OutMail As Object
+    Dim Signature As String
+    Dim sPath As String
+    
+    sPath = "C:\Users\176906\AppData\Roaming\Microsoft\Signatures\Ville Platte - Purchasing.txt"
+    
+    If Dir(sPath) <> "" Then
+        Signature = GetSignature(sPath)
+    Else
+        Signature = ""
+    End If
+    
+    Set OutApp = CreateObject("Outlook.Application")
+    OutApp.Session.Logon
+    Set OutMail = OutApp.CreateItem(0)
+    On Error Resume Next
+    With OutMail
+    .from = ""
+    .To = "robert.lackey@c-a-m.com; angie.west@c-a-m.com; mitch.soileau@c-a-m.com; ava.morein@c-a-m.com; bridget.guillory@c-a-m.com; kellan.sonnier@c-a-m.com; allie.verrette@c-a-m.com; terrez.johnson@c-a-m.com"
+    .CC = "john.russell@c-a-m.com; alaina.rider@c-a-m.com"
+    .BCC = ""
+    .Subject = "Exception Message Report - " & Range("D1")
+    .Body = "All," & vbNewLine & vbNewLine & "Today we have " & Range("B2") & " of " & Range("B1") & " reschedule in messages without comment or " & Range("B3") & "%." & vbNewLine & vbNewLine & Signature
+    
+    Wb4.Activate
+    
+    .Attachments.Add ActiveWorkbook.FullName
+    'You can add other files also like this
+    '.Attachments.Add ("C:\test.txt")
+    .Send 'or use .Display/ .Send
+    End With
+    On Error GoTo 0
+    Set OutMail = Nothing
+    Set OutApp = Nothing
+
+    ActiveWorkbook.SaveAs Filename:="I:\Exception Messages\Temp Files\today.xlsm"
+    
+    Wb1.Activate
+    ActiveWorkbook.Save
+    ActiveWorkbook.Close
+    Kill "I:\Exception Messages\Scripts\ZZPP_M02_Q001_00000.XLS"
+End Sub
+
+Sub PlanE()
+
+
+Application.DisplayAlerts = False
+Application.ScreenUpdating = False
+
+    Dim Wb1 As Excel.Workbook
+    Set Wb1 = Workbooks.Open("I:\Exception Messages\Temp Files\Temp.xlsx")
+    Dim Wb2 As Excel.Workbook
+    Set Wb2 = Workbooks.Open("I:\Exception Messages\Temp Files\Today.xlsm")
+
+'
+'Email to Master Schedulers
+    ActiveWorkbook.SaveAs Filename:="I:\Exception Messages\Temp Files\Exception Messages - " & Format(Date, "mm.dd.yyyy") & ".xlsm", FileFormat:=52
+
+    Sheets("Exception Messages").Select
+
+'Clear Filters
+
+If ActiveSheet.AutoFilterMode Then ActiveSheet.ShowAllData
+
+'Sorting Info
+
+' Sort only 45 PO's
+    ActiveSheet.UsedRange.AutoFilter Field:=3, Criteria1:="=45*", _
+        Operator:=xlAnd
+        
+' Sort for Reschedule In Exceptions Only
+
+    ActiveSheet.UsedRange.AutoFilter Field:=9, Criteria1:= _
+        "Reschedule in"
+        
+' Sort out Samples
+
+    ActiveSheet.UsedRange.AutoFilter Field:=8, Criteria1:="<>*samp*" _
+       
+'Sort out #VALUE message
+    ActiveSheet.UsedRange.AutoFilter Field:=7, Criteria1:="<>*#*" _
+
+' Sort by Difference in Days for Rechedule Date
+    
+    ActiveSheet.AutoFilter.Sort. _
+        SortFields.Clear
+    ActiveSheet.AutoFilter.Sort. _
+        SortFields.Add Key:=Range("M1:M5000"), SortOn:=xlSortOnValues, Order:= _
+        xlDescending, DataOption:=xlSortNormal
+    With ActiveSheet.AutoFilter.Sort
+        .Header = xlYes
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
+    
+'Blue
+    Range("F2:H2").Select
+    With Selection.Interior
+        .Pattern = xlSolid
+        .PatternColorIndex = xlAutomatic
+        .Color = 12611584
+        .TintAndShade = 0
+        .PatternTintAndShade = 0
+    End With
+    ActiveCell.FormulaR1C1 = "Planning"
+    With Selection
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlCenter
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .IndentLevel = 0
+        .ShrinkToFit = False
+        .ReadingOrder = xlContext
+        .MergeCells = True
+    End With
+    Selection.Font.Size = 32
+    
+' Save File
+
+    ActiveWorkbook.Save
+    
+' Email prompt
+    
+    Wb1.Activate
+    Sheets("Analysis").Select
+    
+    Dim OutApp As Object
+    Dim OutMail As Object
+    Dim Signature As String
+    Dim sPath As String
+    
+    sPath = "C:\Users\176906\AppData\Roaming\Microsoft\Signatures\Ville Platte - Purchasing.txt"
+    
+    If Dir(sPath) <> "" Then
+        Signature = GetSignature(sPath)
+    Else
+        Signature = ""
+    End If
+    
+    Set OutApp = CreateObject("Outlook.Application")
+    OutApp.Session.Logon
+    Set OutMail = OutApp.CreateItem(0)
+    On Error Resume Next
+    With OutMail
+    .from = ""
+    .To = "denny.tastet@c-a-m.com; brian.massa@c-a-m.com; paul.fontenot@c-a-m.com; marcus.colligan@c-a-m.com; tara.f.smith@c-a-m.com; jean.dornier@c-a-m.com; marcus.vela@c-a-m.com; adam.chapman@c-a-m.com; nicholas.colligan@c-a-m.com"
+    .CC = "ched.fontenot@c-a-m.com; robert.lackey@c-a-m.com; phillip.miller@c-a-m.com; jared.blanchard@c-a-m.com; rodger.nichols@c-a-m.com; john.russell@c-a-m.com; alaina.rider@c-a-m.com"
+    .BCC = ""
+    .Subject = "Reschedule In's Requiring Master Scheduler Action as of " & Range("D1")
+    .Body = "All," & vbNewLine & vbNewLine & "Blue items require master scheduler action. Today we have " & Range("B4") & " PO's." & vbNewLine & vbNewLine & "Orange items are safety stock." & vbNewLine & vbNewLine & Signature
+    
+    Wb2.Activate
+    
+    .Attachments.Add ActiveWorkbook.FullName
+    'You can add other files also like this
+    '.Attachments.Add ("C:\test.txt")
+    .Send 'or use .Display/ .Send
+    End With
+    On Error GoTo 0
+    Set OutMail = Nothing
+    Set OutApp = Nothing
+    
+    ActiveWorkbook.Close
+    
+    Wb1.Activate
+    ActiveWorkbook.Close
+        
+    Kill "I:\Exception Messages\Temp Files\Temp.xlsx"
+    Kill "I:\Exception Messages\Temp Files\Exception Messages - " & Format(Date, "mm.dd.yyyy") & ".xlsm"
+    Kill "I:\Exception Messages\Temp Files\Today.xlsm"
+End Sub
+
+
