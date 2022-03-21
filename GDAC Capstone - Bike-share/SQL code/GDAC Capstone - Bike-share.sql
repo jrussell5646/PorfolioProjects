@@ -8,7 +8,7 @@
 
 -- Creates new table, TripData_Master, from 03/2021 table
 
--- Visualizations made with Tableau Public and can be viewed at https://public.tableau.com/app/profile/john1575#!/
+-- Visualizations made with Tableau Public and can be viewed at https://public.tableau.com/app/profile/jrussell5646
 
 Select * into
 TripData_Master
