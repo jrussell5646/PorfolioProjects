@@ -2,7 +2,7 @@
 
 -- Data was tranformed from wide to long in Excel with VBA codes and some manual manipulation.  Both data sets were reduced down to TX data only.
 
--- Visualizations made with Tableau Public and can be viewed at https://public.tableau.com/app/profile/john1575#!/
+-- Visualizations made with Tableau Public and can be viewed at https://public.tableau.com/app/profile/jrussell5646
 
 
 -- Shows data set for monthly Median Home Values in Texas from Jan 2000 - Jan 2022
